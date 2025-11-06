@@ -47,9 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: LoadingIndicator(loadingText: "Cargando..."),
-      );
+      return const Scaffold(body: LoadingIndicator(loadingText: "Cargando..."));
     }
 
     return Scaffold(
@@ -57,10 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('EVconnect'),
         backgroundColor: kPrimaryColor,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _handleLogout,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _handleLogout),
         ],
       ),
       body: Center(
@@ -69,18 +64,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               'Bienvenido${_userName != null ? ", $_userName" : ""}',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             const Text(
               'Próximamente más funcionalidades',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),

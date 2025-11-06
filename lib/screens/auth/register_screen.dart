@@ -33,39 +33,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _trySubmit() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      // Aquí implementaremos el registro real cuando esté disponible
-      await Future.delayed(const Duration(seconds: 2)); // Simulación
+  try {
+    final result = await AuthService.register(
+      _nameController.text.trim(),
+      _paternalController.text.trim(),
+      _maternalController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
+    if (result['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Registro exitoso'),
           backgroundColor: Colors.green,
         ),
       );
-
       Navigator.of(context).pop(); // Volver al login
-    } catch (e) {
-      if (!mounted) return;
-
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al registrar usuario'),
+        SnackBar(
+          content: Text(result['message'] ?? 'Error al registrar usuario'),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    }
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

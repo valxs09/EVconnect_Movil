@@ -32,19 +32,27 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final success = await AuthService.login(
+      final result = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
       if (!mounted) return;
 
-      if (success) {
+      if (result['success']) {
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Inicio de sesión exitoso'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Redirigir al home
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Credenciales inválidas'),
+          SnackBar(
+            content: Text(result['message']),
             backgroundColor: Colors.red,
           ),
         );

@@ -3,11 +3,8 @@ import '../config/theme.dart';
 
 class LoadingIndicator extends StatelessWidget {
   final String? loadingText;
-  
-  const LoadingIndicator({
-    super.key,
-    this.loadingText,
-  });
+
+  const LoadingIndicator({super.key, this.loadingText});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +19,7 @@ class LoadingIndicator extends StatelessWidget {
               strokeWidth: 3.0,
               backgroundColor: kPrimaryColor.withOpacity(0.3),
             ),
-            
+
             if (loadingText != null) ...[
               const SizedBox(height: 16),
               Text(
