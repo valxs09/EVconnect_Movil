@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:evconnect/config/theme.dart';
-import 'package:evconnect/config/routes.dart';
-import 'package:evconnect/screens/auth/login_screen.dart';
-import 'package:evconnect/navigation/main_navigator.dart';
-import 'package:evconnect/services/auth_service.dart';
+import 'config/theme.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/home/home_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const EvcApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized(); // Añade esta línea
+  runApp(const MyApp());
 }
 
-class EvcApp extends StatelessWidget {
-  const EvcApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EVCONNECT',
+      title: 'EVconnect',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      routes: AppRoutes.routes,
-      home: FutureBuilder<bool>(
-        future: AuthService.isLoggedIn(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          return snapshot.data == true 
-              ? const MainNavigator()
-              : const LoginScreen();
-        },
+      theme: ThemeData(
+        primaryColor: kPrimaryColor,
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: kPrimaryColor,
+          primary: kPrimaryColor,
+        ),
+        useMaterial3: true,
       ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }

@@ -55,16 +55,17 @@ class CustomInputField extends StatelessWidget {
                 hintStyle: TextStyle(color: kTextDark.withOpacity(0.5)),
                 border: InputBorder.none, // Elimina el borde del TextField
                 prefixIcon: customPrefix != null ? const SizedBox() : null,
-                suffixIcon: suffixIcon != null
-                    ? GestureDetector(
-                        onTap: onSuffixTap,
-                        child: Icon(
-                          suffixIcon,
-                          color: kTextDark.withOpacity(0.5),
-                          size: 20,
-                        ),
-                      )
-                    : null,
+                suffixIcon:
+                    suffixIcon != null
+                        ? GestureDetector(
+                          onTap: onSuffixTap,
+                          child: Icon(
+                            suffixIcon,
+                            color: kTextDark.withOpacity(0.5),
+                            size: 20,
+                          ),
+                        )
+                        : null,
               ),
             ),
           ),

@@ -11,20 +11,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:evconnect/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Login screen smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const EvcApp());
+    await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that login screen is shown
+    expect(find.text('Inicia sesión\nde tu cuenta'), findsOneWidget);
+    expect(find.text('¿No tienes una cuenta?'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that form fields are present
+    expect(find.byIcon(Icons.email_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
   });
 }

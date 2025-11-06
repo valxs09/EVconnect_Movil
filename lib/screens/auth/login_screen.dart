@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../config/theme.dart';
-import '../../widgets/custom_input.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/form_field.dart';
 import 'register_screen.dart';
-
-// =================================================================
-// PANTALLA DE INICIO DE SESIÓN (Login Screen)
-// =================================================================
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,10 +13,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _showPassword = false;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,8 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (_isLoading) return;
+  Future<void> _tryLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
@@ -59,120 +56,168 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _navigateToSignUp() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const RegisterScreen()));
+  }
+
+  void _navigateToForgotPassword() {
+    Navigator.of(context).pushNamed('/forgot-password');
+  }
+
   @override
   Widget build(BuildContext context) {
-    void navigateToSignUp() {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const RegisterScreen()),
-      );
-    }
-    
-    void navigateToForgotPassword() {
-      Navigator.of(context).pushNamed('/forgot-password');
-    }
-
-
     return Scaffold(
-      backgroundColor: kPrimaryDark, // Fondo oscuro
+      backgroundColor: kPrimaryDark,
       body: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Form(
+          key: _formKey,
           child: Column(
-            children: [
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
               const SizedBox(height: 100),
-              // Logo (Placeholder)
-              Image.asset(
-                'assets/logo.png',
-                width: 80,
-                height: 80,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 80,
+              // Logo
+              Center(
+                child: Image.asset(
+                  'assets/logo.png',
                   height: 80,
-                  decoration: BoxDecoration(
-                    color: kPrimaryColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(CupertinoIcons.shield_lefthalf_fill, color: kWhite, size: 40),
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: kPrimaryColor,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.shield_lefthalf_fill,
+                          color: kWhite,
+                          size: 40,
+                        ),
+                      ),
                 ),
               ),
               const SizedBox(height: 40),
-
               // Título
-              const Text('Sign in to your Account', style: kTitleStyle),
-              const SizedBox(height: 10),
-
-              // Subtítulo y Enlace de Registro
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Don't have an account? ", style: kSubtitleStyle),
-                  GestureDetector(
-                    onTap: navigateToSignUp,
-                    child: const Text('Sign Up',
-                        style: TextStyle(
-                            color: kPrimaryColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline)),
+              const Center(
+                child: Text(
+                  'Inicia sesión\nde tu cuenta',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 60),
-
-              // Campos de entrada
-              CustomInputField(
-                hintText: 'admin@gmail.com',
-                prefixIcon: CupertinoIcons.mail,
-                keyboardType: TextInputType.emailAddress,
+              const SizedBox(height: 8),
+              // ¿No tienes una cuenta?
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      '¿No tienes una cuenta? ',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    InkWell(
+                      onTap: _navigateToSignUp,
+                      child: const Text(
+                        'Regístrate',
+                        style: TextStyle(
+                          color: kPrimaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+              // Campo de Email
+              CustomFormField(
                 controller: _emailController,
+                label: 'admin@gmail.com',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'El correo es obligatorio.';
+                  }
+                  if (!value.contains('@') || !value.contains('.')) {
+                    return 'Introduce un correo válido.';
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(height: 20),
-              CustomInputField(
-                hintText: '12345678',
-                prefixIcon: CupertinoIcons.lock_fill,
-                suffixIcon: _showPassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
-                isPassword: !_showPassword,
+              const SizedBox(height: 12),
+              // Campo de Contraseña
+              CustomFormField(
                 controller: _passwordController,
-                onSuffixTap: () => setState(() => _showPassword = !_showPassword),
+                label: '12345678',
+                icon: Icons.lock_outline,
+                isPassword: true,
+                isPasswordVisible: _isPasswordVisible,
+                onSuffixTap:
+                    () => setState(
+                      () => _isPasswordVisible = !_isPasswordVisible,
+                    ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'La contraseña es obligatoria.';
+                  }
+                  return null;
+                },
               ),
-              const SizedBox(height: 20),
-
-              // Enlace Olvidé mi contraseña
+              const SizedBox(height: 15),
+              // ¿Olvidaste tu contraseña?
               Align(
                 alignment: Alignment.center,
                 child: TextButton(
-                  onPressed: navigateToForgotPassword,
+                  onPressed: _navigateToForgotPassword,
                   child: const Text(
-                    'Forgot Your Password ?',
+                    '¿Olvidaste tu contraseña?',
                     style: TextStyle(
                       color: kPrimaryColor,
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
-
-              // Botón de Inicio de Sesión
+              const SizedBox(height: 40),
+              // Botón Iniciar sesión
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                style: kPrimaryButtonStyle,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: kWhite,
-                          strokeWidth: 2,
+                onPressed: _isLoading ? null : _tryLogin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: kPrimaryDark,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : const Text(
+                          'Iniciar sesión',
+                          style: TextStyle(
+                            color: kPrimaryDark,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      )
-                    : const Text(
-                        'Log In',
-                        style: kPrimaryButtonTextStyle,
-                      ),
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 40),
             ],
           ),
         ),
