@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../models/payment_card_model.dart';
 import '../../services/payment_service.dart';
+import '../../services/auth_service.dart';
 
 class VirtualCardScreen extends StatefulWidget {
   const VirtualCardScreen({super.key});
@@ -30,12 +31,44 @@ class _VirtualCardScreenState extends State<VirtualCardScreen> {
       _isLoading = true;
     });
 
+    print('🔍 [WalletScreen] Iniciando carga de métodos de pago...');
+
+    // Verificar que el usuario esté autenticado
+    final user = await AuthService.getCurrentUser();
+    if (user == null) {
+      print('❌ [WalletScreen] Usuario no autenticado');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sesión expirada. Por favor, inicia sesión nuevamente.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    print('✅ [WalletScreen] Usuario autenticado: ${user.email}');
+    print(
+      '🔑 [WalletScreen] Stripe Customer ID: ${user.stripeCustomerId ?? "No disponible"}',
+    );
+
     final cards = await PaymentService.getPaymentMethods();
+    print('🔍 [WalletScreen] Tarjetas recibidas: ${cards.length}');
 
     setState(() {
       _cards = cards;
       _isLoading = false;
     });
+
+    if (cards.isEmpty) {
+      print('⚠️ [WalletScreen] No se encontraron tarjetas');
+    }
   }
 
   Future<void> _setPrincipal(String id) async {

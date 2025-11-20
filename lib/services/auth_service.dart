@@ -8,6 +8,7 @@ class AuthService {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
   static const String _stripeCustomerIdKey = 'stripe_customer_id';
+  static const String _nfcUidKey = 'nfc_uid';
 
   static Future<bool> isAuthenticated() async {
     try {
@@ -83,6 +84,16 @@ class AuthService {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_tokenKey, data['data']['token']);
           await prefs.setString(_userKey, jsonEncode(data['data']['user']));
+
+          // Guardar stripe_customer_id si está disponible
+          if (data['data']['user'] != null &&
+              data['data']['user']['stripe_customer_id'] != null) {
+            await saveStripeCustomerId(
+              data['data']['user']['stripe_customer_id'],
+            );
+            print('✅ Stripe Customer ID guardado desde login');
+          }
+
           return {
             'success': true,
             'message': 'Login exitoso',
@@ -191,6 +202,34 @@ class AuthService {
       return customerId;
     } catch (e) {
       print('❌ Error al recuperar Stripe Customer ID: $e');
+      return null;
+    }
+  }
+
+  // Guardar el NFC UID
+  static Future<void> saveNfcUid(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_nfcUidKey, uid);
+      print('✅ NFC UID almacenado correctamente: $uid');
+    } catch (e) {
+      print('❌ Error al almacenar NFC UID: $e');
+    }
+  }
+
+  // Obtener el NFC UID
+  static Future<String?> getNfcUid() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final uid = prefs.getString(_nfcUidKey);
+      if (uid != null) {
+        print('✅ NFC UID recuperado correctamente: $uid');
+      } else {
+        print('⚠️ No hay NFC UID almacenado');
+      }
+      return uid;
+    } catch (e) {
+      print('❌ Error al recuperar NFC UID: $e');
       return null;
     }
   }

@@ -16,6 +16,22 @@ class PaymentService {
         return [];
       }
 
+      final stripeCustomerId = await AuthService.getStripeCustomerId();
+      if (stripeCustomerId == null) {
+        print('⚠️ No hay stripe_customer_id almacenado');
+        // Intentar obtenerlo del perfil del usuario
+        final user = await AuthService.getCurrentUser();
+        if (user?.stripeCustomerId != null) {
+          await AuthService.saveStripeCustomerId(user!.stripeCustomerId!);
+          print(
+            '✅ Stripe Customer ID recuperado del perfil: ${user.stripeCustomerId}',
+          );
+        } else {
+          print('❌ No se pudo obtener el stripe_customer_id');
+          return [];
+        }
+      }
+
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.paymentMethods}'),
         headers: {...ApiConstants.headers, 'Authorization': 'Bearer $token'},
@@ -23,6 +39,7 @@ class PaymentService {
 
       print('📊 Status Code: ${response.statusCode}');
       print('📊 Response Body: ${response.body}');
+      print('📊 Token usado: ${token.substring(0, 20)}...');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
