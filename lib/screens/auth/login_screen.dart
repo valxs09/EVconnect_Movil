@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
         // Redirigir al home
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushReplacementNamed('/main');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

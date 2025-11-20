@@ -6,7 +6,8 @@ class ApiConstants {
   // Endpoints
   static const String register = '$apiVersion/user/register';
   static const String login = '$apiVersion/user/login';
-  static const String profile = '$apiVersion/user/me';  
+  static const String profile = '$apiVersion/user/me';
+  static const String paymentMethods = '$apiVersion/payment-methods';
 
   // Headers
   static const Map<String, String> headers = {

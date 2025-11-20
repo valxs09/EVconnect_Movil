@@ -13,7 +13,7 @@ import 'package:evconnect/main.dart';
 void main() {
   testWidgets('Login screen smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const MyApp(isAuthenticated: false));
 
     // Verify that login screen is shown
     expect(find.text('Inicia sesión\nde tu cuenta'), findsOneWidget);

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/history/history_screen.dart';
-import '../screens/virtual_card/virtual_card_screen.dart';
-import '../screens/profile/profile_screen.dart';
+import '../screens/wallet/wallet_screen.dart';
 
 class MainNavigator extends StatefulWidget {
   const MainNavigator({super.key});
@@ -14,12 +12,12 @@ class MainNavigator extends StatefulWidget {
 
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
+  final Color _backgroundColor = const Color(0xFF37A686);
 
   final List<Widget> _screens = [
-    // const HomeScreen(),
-    // const HistoryScreen(),
-    // const VirtualCardScreen(),
-    // const ProfileScreen(),
+    const HomeScreen(),
+    const VirtualCardScreen(),
+    const HistoryScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -33,30 +31,42 @@ class _MainNavigatorState extends State<MainNavigator> {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
+        elevation: 0,
+        backgroundColor: _backgroundColor,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.clock),
-            label: 'Historial',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.creditcard),
-            label: 'Tarjeta',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person),
-            label: 'Perfil',
-          ),
+        items: [
+          _buildNavItem(Icons.star, 'Inicio', 0),
+          _buildNavItem(Icons.credit_card_outlined, 'Tarjetas', 1),
+          _buildNavItem(Icons.history, 'Historial', 2),
         ],
       ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavItem(
+    IconData icon,
+    String label,
+    int index,
+  ) {
+    return BottomNavigationBarItem(
+      icon: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+        decoration:
+            index == _selectedIndex
+                ? BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                )
+                : null,
+        child: Icon(icon, size: 24),
+      ),
+      label: label,
     );
   }
 }

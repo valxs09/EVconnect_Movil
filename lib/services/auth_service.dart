@@ -7,12 +7,29 @@ import '../models/user_model.dart';
 class AuthService {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
+  static const String _stripeCustomerIdKey = 'stripe_customer_id';
 
-  static Future<Map<String, dynamic>> register(String nombre, String apellidoPaterno, 
-      String apellidoMaterno, String email, String password) async {
+  static Future<bool> isAuthenticated() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_tokenKey);
+      return token != null;
+    } catch (e) {
+      print('Error al verificar autenticación: $e');
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>> register(
+    String nombre,
+    String apellidoPaterno,
+    String apellidoMaterno,
+    String email,
+    String password,
+  ) async {
     try {
       print('Intentando registrar usuario con email: $email');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.register}'),
         headers: ApiConstants.headers,
@@ -32,29 +49,29 @@ class AuthService {
       return {
         'success': response.statusCode == 201,
         'message': responseData['message'] ?? 'Error desconocido',
-        'data': responseData['data']
+        'data': responseData['data'],
       };
     } catch (e) {
       print('Error durante el registro: $e');
       return {
         'success': false,
         'message': 'Error de conexión: $e',
-        'data': null
+        'data': null,
       };
     }
   }
 
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     try {
       print('Intentando login con email: $email');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.login}'),
         headers: ApiConstants.headers,
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       print('Código de respuesta: ${response.statusCode}');
@@ -69,23 +86,23 @@ class AuthService {
           return {
             'success': true,
             'message': 'Login exitoso',
-            'data': data['data']
+            'data': data['data'],
           };
         }
       }
-      
+
       final responseData = jsonDecode(response.body);
       return {
         'success': false,
         'message': responseData['message'] ?? 'Credenciales inválidas',
-        'data': null
+        'data': null,
       };
     } catch (e) {
       print('Error durante el login: $e');
       return {
         'success': false,
         'message': 'Error de conexión: $e',
-        'data': null
+        'data': null,
       };
     }
   }
@@ -94,15 +111,12 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey);
-      
+
       if (token == null) return null;
 
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.profile}'),
-        headers: {
-          ...ApiConstants.headers,
-          'Authorization': 'Bearer $token',
-        },
+        headers: {...ApiConstants.headers, 'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
@@ -122,5 +136,62 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+    await prefs.remove(_stripeCustomerIdKey);
+  }
+
+  // Guardar el token de autenticación
+  static Future<void> saveToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, token);
+      print('✅ Token almacenado correctamente: ${token.substring(0, 20)}...');
+    } catch (e) {
+      print('❌ Error al almacenar token: $e');
+    }
+  }
+
+  // Obtener el token de autenticación
+  static Future<String?> getToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_tokenKey);
+      if (token != null) {
+        print('✅ Token recuperado correctamente: ${token.substring(0, 20)}...');
+      } else {
+        print('⚠️ No hay token almacenado');
+      }
+      return token;
+    } catch (e) {
+      print('❌ Error al recuperar token: $e');
+      return null;
+    }
+  }
+
+  // Guardar el Stripe Customer ID
+  static Future<void> saveStripeCustomerId(String customerId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_stripeCustomerIdKey, customerId);
+      print('✅ Stripe Customer ID almacenado correctamente: $customerId');
+    } catch (e) {
+      print('❌ Error al almacenar Stripe Customer ID: $e');
+    }
+  }
+
+  // Obtener el Stripe Customer ID
+  static Future<String?> getStripeCustomerId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customerId = prefs.getString(_stripeCustomerIdKey);
+      if (customerId != null) {
+        print('✅ Stripe Customer ID recuperado correctamente: $customerId');
+      } else {
+        print('⚠️ No hay Stripe Customer ID almacenado');
+      }
+      return customerId;
+    } catch (e) {
+      print('❌ Error al recuperar Stripe Customer ID: $e');
+      return null;
+    }
   }
 }
