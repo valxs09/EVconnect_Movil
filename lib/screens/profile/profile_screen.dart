@@ -1,16 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:evconnect/widgets/custom_app_bar.dart';
 import '../../services/auth_service.dart';
+import '../../models/user_model.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   final Color _backgroundColor = const Color(0xFFF2F2F2);
   final Color _darkCardColor = const Color(0xFF2C403A);
   final Color _primaryColor = const Color(0xFF37A686);
 
+  User? _user;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await AuthService.getCurrentUser();
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error al cargar datos del usuario: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: _backgroundColor,
+        appBar: const CustomAppBar(title: 'Mi Perfil', showBackButton: true),
+        body: const Center(
+          child: CircularProgressIndicator(color: Color(0xFF37A686)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: const CustomAppBar(title: 'Mi Perfil', showBackButton: true),
@@ -65,28 +107,28 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           CircleAvatar(
             radius: 30,
             backgroundColor: Colors.white,
-            child: Icon(Icons.person, size: 40, color: Color(0xFF2C403A)),
+            child: Icon(Icons.person, size: 40, color: _darkCardColor),
           ),
-          SizedBox(width: 15),
+          const SizedBox(width: 15),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Valeria',
-                style: TextStyle(
+                _user?.nombreApellido ?? 'Usuario',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-                'valeria@gmail.com',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+                _user?.email ?? 'email@example.com',
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),
@@ -108,7 +150,7 @@ class ProfileScreen extends StatelessWidget {
               context,
               icon: Icons.person_outline,
               label: 'Nombre',
-              value: 'Valeria Fernanda',
+              value: _user?.nombre ?? '-',
               isDestructive: false,
             ),
             _buildDivider(),
@@ -116,7 +158,9 @@ class ProfileScreen extends StatelessWidget {
               context,
               icon: Icons.person_outline,
               label: 'Apellidos',
-              value: 'Salazar Ku',
+              value:
+                  '${_user?.apellidoPaterno ?? ''} ${_user?.apellidoMaterno ?? ''}'
+                      .trim(),
               isDestructive: false,
             ),
             _buildDivider(),
@@ -124,7 +168,7 @@ class ProfileScreen extends StatelessWidget {
               context,
               icon: Icons.lock_outline,
               label: 'Email',
-              value: 'valeria@gmail.com',
+              value: _user?.email ?? '-',
               isDestructive: false,
             ),
             _buildDivider(),

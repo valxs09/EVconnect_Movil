@@ -5,6 +5,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'config/theme.dart';
 import 'config/routes.dart';
 import 'services/auth_service.dart';
+import 'services/websocket_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,9 @@ void main() async {
   } else {
     print('⚠️ Stripe no está disponible en esta plataforma (solo Android/iOS)');
   }
+
+  // Conectar WebSocket de prueba
+  await WebSocketService.connect(cargadorId: 2, role: 'client');
 
   final bool isAuthenticated = await AuthService.isAuthenticated();
   runApp(MyApp(isAuthenticated: isAuthenticated));

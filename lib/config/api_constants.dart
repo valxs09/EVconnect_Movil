@@ -8,6 +8,7 @@ class ApiConstants {
   static const String login = '$apiVersion/user/login';
   static const String profile = '$apiVersion/user/me';
   static const String paymentMethods = '$apiVersion/payment-methods';
+  static const String chargers = '$apiVersion/cargadores';
 
   // Headers
   static const Map<String, String> headers = {

@@ -120,12 +120,9 @@ class _VirtualCardScreenState extends State<VirtualCardScreen> {
         decoration: BoxDecoration(
           color: _cardColor,
           borderRadius: BorderRadius.circular(12),
-          border:
-              isPrincipal
-                  ? Border(
-                    top: BorderSide(color: _primaryBorderColor, width: 4.0),
-                  )
-                  : null,
+          border: Border(
+            top: BorderSide(color: _primaryBorderColor, width: 4.0),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),

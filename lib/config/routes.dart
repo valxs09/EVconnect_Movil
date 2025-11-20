@@ -4,6 +4,7 @@ import '../screens/auth/register_screen.dart';
 import '../navigation/main_navigator.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/payments/payment_screen.dart';
+import '../screens/reservations/nfc_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -11,6 +12,7 @@ class AppRoutes {
   static const String main = '/main';
   static const String profile = '/profile';
   static const String payment = '/payment';
+  static const String nfc = '/nfc';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -18,5 +20,6 @@ class AppRoutes {
     main: (context) => const MainNavigator(),
     profile: (context) => const ProfileScreen(),
     payment: (context) => const PaymentScreen(),
+    nfc: (context) => const NFCScreen(),
   };
 }

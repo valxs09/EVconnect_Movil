@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/charger_service.dart';
 import '../../widgets/loading_indicator.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,6 +16,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final Color _backgroundColor = const Color(0xFFF2F2F2);
   final Color _quickChargeColor = const Color(0xFFEF503D);
   final Color _standardChargeColor = const Color(0xFF3FABAB);
+
+  // ID de la estación (puedes cambiarlo según tu lógica)
+  final int _estacionId = 1;
 
   @override
   void initState() {
@@ -38,6 +42,73 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _handleChargeSelection(String tipoCarga) async {
+    // Mostrar indicador de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(color: Color(0xFF37A686)),
+          ),
+    );
+
+    try {
+      // Buscar cargadores disponibles del tipo seleccionado
+      final chargers = await ChargerService.getAvailableChargersByType(
+        estacionId: _estacionId,
+        tipoCarga: tipoCarga,
+      );
+
+      // Cerrar el diálogo de carga
+      if (mounted) Navigator.pop(context);
+
+      if (chargers.isEmpty) {
+        // No hay cargadores disponibles
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'No hay cargadores de carga $tipoCarga disponibles en este momento',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        // Hay cargadores disponibles, navegar a la pantalla NFC
+        print('✅ Cargador asignado: ${chargers.first.idCargador}');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '¡Cargador #${chargers.first.idCargador} asignado! (${chargers.first.capacidadKw} kW)',
+              ),
+              backgroundColor: const Color(0xFF37A686),
+            ),
+          );
+
+          // Navegar a NFCScreen pasando el cargador
+          Navigator.pushNamed(context, '/nfc', arguments: chargers.first);
+        }
+      }
+    } catch (e) {
+      // Cerrar el diálogo si aún está abierto
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al buscar cargadores disponibles'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildChargingCard({
     required String title,
     required String description,
@@ -45,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color primaryColor,
     required String buttonText,
     required IconData icon,
+    required String tipoCarga,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -111,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => _handleChargeSelection(tipoCarga),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: primaryColor,
@@ -224,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   primaryColor: _quickChargeColor,
                   buttonText: 'Empezar Carga',
                   icon: Icons.rocket_launch_outlined,
+                  tipoCarga: 'rapida',
                 ),
                 _buildChargingCard(
                   title: 'Carga Estándar',
@@ -232,6 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   primaryColor: _standardChargeColor,
                   buttonText: 'Empezar Carga',
                   icon: Icons.flash_on,
+                  tipoCarga: 'lenta',
                 ),
                 const SizedBox(height: 40),
               ],
