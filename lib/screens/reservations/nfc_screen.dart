@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:nfc_manager/nfc_manager.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../models/charger_model.dart';
@@ -23,6 +24,10 @@ class _NFCScreenState extends State<NFCScreen> {
   bool _isReading = false;
   String? _nfcData;
 
+  // Timer para navegación y timeout
+  Timer? _navigationTimer;
+  Timer? _nfcTimeoutTimer;
+
   @override
   void initState() {
     super.initState();
@@ -31,8 +36,19 @@ class _NFCScreenState extends State<NFCScreen> {
 
   @override
   void dispose() {
+    print('🧹 Limpiando recursos de NFCScreen...');
+
+    // Cancelar timers
+    _navigationTimer?.cancel();
+    _navigationTimer = null;
+    _nfcTimeoutTimer?.cancel();
+    _nfcTimeoutTimer = null;
+
+    // Detener sesión NFC
     NfcManager.instance.stopSession();
+
     super.dispose();
+    print('✅ Recursos NFC limpiados correctamente');
   }
 
   // Verificar si NFC está disponible en el dispositivo
@@ -61,6 +77,23 @@ class _NFCScreenState extends State<NFCScreen> {
     });
 
     print('📡 Iniciando lectura NFC...');
+
+    // Obtener el cargador desde el contexto antes del callback
+    final ChargerModel? charger =
+        ModalRoute.of(context)?.settings.arguments as ChargerModel?;
+
+    // Timeout de 30 segundos para la lectura NFC
+    _nfcTimeoutTimer?.cancel();
+    _nfcTimeoutTimer = Timer(const Duration(seconds: 30), () {
+      if (_isReading && mounted) {
+        print('⚠️ Timeout de lectura NFC (30s)');
+        NfcManager.instance.stopSession();
+        setState(() {
+          _isReading = false;
+        });
+        _showSnackBar('⏱️ Tiempo de espera agotado. Intenta nuevamente.');
+      }
+    });
 
     try {
       NfcManager.instance.startSession(
@@ -137,8 +170,20 @@ class _NFCScreenState extends State<NFCScreen> {
 
             _showSnackBar(' NFC leído exitosamente');
 
+            // Cancelar timeout ya que se leyó exitosamente
+            _nfcTimeoutTimer?.cancel();
+            _nfcTimeoutTimer = null;
+
             // Detener la sesión
             NfcManager.instance.stopSession();
+
+            // Navegar a TimeScreen después de 1 segundo usando Timer cancelable
+            _navigationTimer?.cancel();
+            _navigationTimer = Timer(const Duration(seconds: 1), () {
+              if (mounted) {
+                Navigator.pushNamed(context, '/time', arguments: charger);
+              }
+            });
           } else {
             print('⚠️ No se pudo extraer el UID del tag');
             _showSnackBar(' No se pudo leer el UID del NFC');
@@ -152,6 +197,11 @@ class _NFCScreenState extends State<NFCScreen> {
         },
         onError: (error) async {
           print('❌ Error al leer NFC: $error');
+
+          // Cancelar timeout
+          _nfcTimeoutTimer?.cancel();
+          _nfcTimeoutTimer = null;
+
           _showSnackBar('❌ Error al leer NFC');
           if (mounted) {
             setState(() {
@@ -162,6 +212,11 @@ class _NFCScreenState extends State<NFCScreen> {
       );
     } catch (e) {
       print('❌ Excepción al iniciar lectura NFC: $e');
+
+      // Cancelar timeout
+      _nfcTimeoutTimer?.cancel();
+      _nfcTimeoutTimer = null;
+
       _showSnackBar('❌ Error al iniciar lectura NFC');
       if (mounted) {
         setState(() {

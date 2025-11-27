@@ -1,10 +1,11 @@
+// Archivo: lib/models/payment_card_model.dart
 class PaymentCardModel {
-  final String id;
-  final String brand;
-  final String last4;
-  final String expMonth;
-  final String expYear;
-  final bool isPrincipal;
+  final String id; // Mapeado desde 'token_referencia' o 'id'
+  final String brand; // Visa, Mastercard...
+  final String last4; // Últimos 4 dígitos (visible para el usuario)
+  final int expMonth;
+  final int expYear;
+  final bool isPrincipal; // Mapeado desde 'es_predeterminado'
 
   PaymentCardModel({
     required this.id,
@@ -12,32 +13,47 @@ class PaymentCardModel {
     required this.last4,
     required this.expMonth,
     required this.expYear,
-    this.isPrincipal = false,
+    required this.isPrincipal,
   });
 
-  String get expiry => '$expMonth/$expYear';
-
-  factory PaymentCardModel.fromJson(Map<String, dynamic> json) {
-    // Parsear la fecha de expiración "12/2030"
-    String expira = json['expira'] ?? '00/0000';
-    List<String> parts = expira.split('/');
-    String expMonth = parts.isNotEmpty ? parts[0] : '00';
-    String expYear =
-        parts.length > 1
-            ? parts[1].substring(2)
-            : '00'; // Últimos 2 dígitos del año
-
-    return PaymentCardModel(
-      id: json['payment_method_id'] ?? '',
-      brand:
-          (json['tipo'] ?? 'Unknown').toString().toUpperCase(), // visa -> VISA
-      last4: json['ultimos_digitos'] ?? '0000',
-      expMonth: expMonth.padLeft(2, '0'),
-      expYear: expYear,
-      isPrincipal: json['es_predeterminado'] ?? false,
-    );
+  // Genera el texto "12/25" para la UI
+  String get expiry {
+    String yearStr = expYear.toString();
+    String shortYear = yearStr.length >= 4 ? yearStr.substring(2) : '00';
+    return '${expMonth.toString().padLeft(2, '0')}/$shortYear';
   }
 
+  factory PaymentCardModel.fromJson(Map<String, dynamic> json) {
+    // Lógica para parsear la fecha "6/2030" que manda tu backend
+    int parsedMonth = 0;
+    int parsedYear = 0;
+
+    if (json['expira'] != null) {
+      try {
+        final parts = json['expira'].toString().split('/');
+        if (parts.length == 2) {
+          parsedMonth = int.tryParse(parts[0]) ?? 0;
+          parsedYear = int.tryParse(parts[1]) ?? 0;
+        }
+      } catch (e) {
+        print('Error parseando fecha: $e');
+      }
+    } else {
+      // Fallback por si en el futuro cambia a formato separado
+      parsedMonth = int.tryParse(json['exp_month']?.toString() ?? '0') ?? 0;
+      parsedYear = int.tryParse(json['exp_year']?.toString() ?? '0') ?? 0;
+    }
+
+    return PaymentCardModel(
+      // Mapeo de todos los nombres posibles de campos
+      id: json['payment_method_id'] ?? json['id'] ?? '',
+      brand: json['tipo'] ?? json['brand'] ?? 'Tarjeta',
+      last4: json['ultimos_digitos'] ?? json['last4'] ?? '0000',
+      isPrincipal: json['es_predeterminado'] ?? json['default'] ?? false,
+      expMonth: parsedMonth,
+      expYear: parsedYear,
+    );
+  }
   Map<String, dynamic> toJson() {
     return {
       'payment_method_id': id,

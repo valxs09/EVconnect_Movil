@@ -5,7 +5,6 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'config/theme.dart';
 import 'config/routes.dart';
 import 'services/auth_service.dart';
-import 'services/websocket_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,19 +12,24 @@ void main() async {
   // Configurar Stripe solo en Android e iOS
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     try {
+      print('🔄 Inicializando Stripe...');
+
       Stripe.publishableKey =
           'pk_test_51SQEDRGsGUVjmzkud1fhYIystj0z4Ru3tXFqiJy5ftqZdrcpOU8EuOtx4RVA07bJeqi4cAdx3TweA7IbkgkTHTN300dm2NGHCx';
-      await Stripe.instance.applySettings();
-      print('✅ Stripe inicializado correctamente');
+
+      print('✅ Publishable key configurado');
+      print(
+        '✅ Stripe inicializado correctamente en ${Platform.operatingSystem}',
+      );
     } catch (e) {
       print('❌ Error inicializando Stripe: $e');
+      print('⚠️ La app continuará pero los pagos no funcionarán');
     }
   } else {
     print('⚠️ Stripe no está disponible en esta plataforma (solo Android/iOS)');
   }
 
-  // Conectar WebSocket de prueba
-  await WebSocketService.connect(cargadorId: 2, role: 'client');
+  // WebSocket se conectará automáticamente cuando el usuario inicie una sesión de carga
 
   final bool isAuthenticated = await AuthService.isAuthenticated();
   runApp(MyApp(isAuthenticated: isAuthenticated));

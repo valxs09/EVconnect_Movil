@@ -16,22 +16,6 @@ class PaymentService {
         return [];
       }
 
-      final stripeCustomerId = await AuthService.getStripeCustomerId();
-      if (stripeCustomerId == null) {
-        print('⚠️ No hay stripe_customer_id almacenado');
-        // Intentar obtenerlo del perfil del usuario
-        final user = await AuthService.getCurrentUser();
-        if (user?.stripeCustomerId != null) {
-          await AuthService.saveStripeCustomerId(user!.stripeCustomerId!);
-          print(
-            '✅ Stripe Customer ID recuperado del perfil: ${user.stripeCustomerId}',
-          );
-        } else {
-          print('❌ No se pudo obtener el stripe_customer_id');
-          return [];
-        }
-      }
-
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.paymentMethods}'),
         headers: {...ApiConstants.headers, 'Authorization': 'Bearer $token'},
@@ -40,6 +24,22 @@ class PaymentService {
       print('📊 Status Code: ${response.statusCode}');
       print('📊 Response Body: ${response.body}');
       print('📊 Token usado: ${token.substring(0, 20)}...');
+
+      // final stripeCustomerId = await AuthService.getStripeCustomerId();
+      // if (stripeCustomerId == null) {
+      //   print('⚠️ No hay stripe_customer_id almacenado');
+      //   // Intentar obtenerlo del perfil del usuario
+      //   final user = await AuthService.getCurrentUser();
+      //   if (user?.stripeCustomerId != null) {
+      //     await AuthService.saveStripeCustomerId(user!.stripeCustomerId!);
+      //     print(
+      //       '✅ Stripe Customer ID recuperado del perfil: ${user.stripeCustomerId}',
+      //     );
+      //   } else {
+      //     print('❌ No se pudo obtener el stripe_customer_id');
+      //     return [];
+      //   }
+      // }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -182,6 +182,112 @@ class PaymentService {
       }
     } catch (e) {
       print('❌ Error en deletePaymentMethod: $e');
+      return false;
+    }
+  }
+
+  // ========== MÉTODOS PARA STRIPE SETUPINTENT ==========
+
+  // Crear un SetupIntent en el backend (obtener client_secret)
+  static Future<String?> createSetupIntent() async {
+    try {
+      print('📡 Creando SetupIntent...');
+
+      final token = await AuthService.getToken();
+      if (token == null) {
+        print('❌ No hay token de autenticación');
+        return null;
+      }
+
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/api/payment-methods/setup'),
+            headers: {
+              ...ApiConstants.headers,
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              print('⏱️ Timeout: La petición tardó más de 10 segundos');
+              throw Exception('Timeout al crear SetupIntent');
+            },
+          );
+
+      print('📊 Status Code: ${response.statusCode}');
+      print('📊 Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+
+        // Acceder a 'data' y luego a 'client_secret'
+        if (body['data'] != null && body['data']['client_secret'] != null) {
+          print('✅ SetupIntent creado exitosamente');
+          return body['data']['client_secret'] as String;
+        }
+      }
+
+      print('❌ Error o formato inesperado en la respuesta: ${response.body}');
+      return null;
+    } catch (e) {
+      print('❌ Error en createSetupIntent: $e');
+      return null;
+    }
+  }
+
+  // Guardar el payment_method_id en el backend
+  static Future<bool> savePaymentMethod(String paymentMethodId) async {
+    try {
+      print('📡 Guardando payment method: $paymentMethodId');
+
+      final token = await AuthService.getToken();
+      if (token == null) {
+        print('❌ No hay token de autenticación');
+        return false;
+      }
+
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/api/payment-methods'),
+            headers: {
+              ...ApiConstants.headers,
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'payment_method_id': paymentMethodId}),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              print('⏱️ Timeout: La petición tardó más de 15 segundos');
+              throw Exception('Timeout al guardar payment method');
+            },
+          );
+
+      print('📊 Status Code: ${response.statusCode}');
+      print('📊 Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
+
+        // Verificar que la respuesta sea exitosa
+        if (body['success'] == true) {
+          print('✅ Payment method guardado exitosamente');
+          print('📊 Datos guardados: ${body['data']}');
+          return true;
+        } else {
+          print('❌ El backend respondió con success: false');
+          print('📊 Mensaje: ${body['message']}');
+          return false;
+        }
+      } else {
+        print(
+          '❌ Error al guardar payment method - Status: ${response.statusCode}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('❌ Error en savePaymentMethod: $e');
       return false;
     }
   }
