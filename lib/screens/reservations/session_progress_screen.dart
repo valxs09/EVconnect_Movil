@@ -41,8 +41,7 @@ class _SessionProgressScreenState extends State<SessionProgressScreen> {
   // Control de finalización manual
   bool _isFinishing = false;
 
-  // Throttling para evitar setState() excesivos
-  DateTime? _lastProgressUpdate;
+  // Timer de backup
   Timer? _backupTimer;
 
   // Colores
@@ -186,32 +185,19 @@ class _SessionProgressScreenState extends State<SessionProgressScreen> {
   void _handleSessionProgress(Map<String, dynamic> data) {
     if (!mounted) return;
 
-    // THROTTLING: Limitar actualizaciones a máximo cada 500ms
-    final now = DateTime.now();
-    if (_lastProgressUpdate != null) {
-      final diff = now.difference(_lastProgressUpdate!);
-      if (diff.inMilliseconds < 500) {
-        // Ignorar esta actualización, muy frecuente
-        return;
-      }
-    }
-    _lastProgressUpdate = now;
-
     final int tiempoTranscurridoSeg = data['tiempo_transcurrido_seg'] as int;
     final int tiempoRestanteSeg = data['tiempoRestanteSeg'] as int;
     final double montoAcumulado = (data['monto_acumulado'] as num).toDouble();
     final int duracionEstimadaMin = data['duracion_estimada_min'] as int;
 
-    // Usar addPostFrameCallback para no bloquear el frame actual
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      setState(() {
-        _elapsedTime = Duration(seconds: tiempoTranscurridoSeg);
-        _remainingTime = Duration(seconds: tiempoRestanteSeg);
-        _currentCost = montoAcumulado;
-        _totalSeconds = (duracionEstimadaMin * 60).toDouble();
-        _currentProgress = tiempoRestanteSeg / _totalSeconds;
-      });
+    // Actualización directa sin throttling para mejor experiencia visual
+    if (!mounted) return;
+    setState(() {
+      _elapsedTime = Duration(seconds: tiempoTranscurridoSeg);
+      _remainingTime = Duration(seconds: tiempoRestanteSeg);
+      _currentCost = montoAcumulado;
+      _totalSeconds = (duracionEstimadaMin * 60).toDouble();
+      _currentProgress = tiempoRestanteSeg / _totalSeconds;
     });
   }
 
