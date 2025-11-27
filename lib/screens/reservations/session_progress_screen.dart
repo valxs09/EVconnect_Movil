@@ -287,9 +287,7 @@ class _SessionProgressScreenState extends State<SessionProgressScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(
-                        color: Color(0xFF37A686),
-                      ),
+                      CircularProgressIndicator(color: Color(0xFF37A686)),
                       SizedBox(height: 16),
                       Text(
                         'Finalizando carga...',
@@ -350,13 +348,19 @@ class _SessionProgressScreenState extends State<SessionProgressScreen> {
     final String chargerName = args?['chargerName'] ?? widget.chargerName;
 
     // Extraer datos del resultado del servidor
-    final double montoCobrado = (data['monto_cobrado'] as num?)?.toDouble() ?? _currentCost;
-    final double montoRetenido = (data['monto_retenido'] as num?)?.toDouble() ?? _montoRetenido;
-    final double ahorro = (data['ahorro'] is String 
-        ? double.tryParse(data['ahorro']) 
-        : (data['ahorro'] as num?)?.toDouble()) ?? 0.0;
-    final int tiempoTranscurrido = data['tiempo_transcurrido_min'] as int? ?? _elapsedTime.inMinutes;
-    final double energiaConsumida = (data['energia_consumida_kwh'] as num?)?.toDouble() ?? 0.0;
+    final double montoCobrado =
+        (data['monto_cobrado'] as num?)?.toDouble() ?? _currentCost;
+    final double montoRetenido =
+        (data['monto_retenido'] as num?)?.toDouble() ?? _montoRetenido;
+    final double ahorro =
+        (data['ahorro'] is String
+            ? double.tryParse(data['ahorro'])
+            : (data['ahorro'] as num?)?.toDouble()) ??
+        0.0;
+    final int tiempoTranscurrido =
+        data['tiempo_transcurrido_min'] as int? ?? _elapsedTime.inMinutes;
+    final double energiaConsumida =
+        (data['energia_consumida_kwh'] as num?)?.toDouble() ?? 0.0;
 
     print('📊 Navegando a resumen con datos:');
     print('   Monto cobrado: \$$montoCobrado');
@@ -370,7 +374,9 @@ class _SessionProgressScreenState extends State<SessionProgressScreen> {
       arguments: {
         'totalCost': '\$${montoCobrado.toStringAsFixed(2)}',
         'energyConsumed': '${energiaConsumida.toStringAsFixed(1)}kWh',
-        'duration': _formatDurationForSummary(Duration(minutes: tiempoTranscurrido)),
+        'duration': _formatDurationForSummary(
+          Duration(minutes: tiempoTranscurrido),
+        ),
         'stationId': chargerName,
         'paymentCard': 'Visa ••••4567',
         'montoRetenido': '\$${montoRetenido.toStringAsFixed(2)}',

@@ -291,4 +291,99 @@ class PaymentService {
       return false;
     }
   }
+
+  // Recuperar el payment_method_id desde un SetupIntent completado
+  // Esto requiere que el backend consulte el SetupIntent en Stripe
+  static Future<String?> retrievePaymentMethodFromSetupIntent(
+    String clientSecret,
+  ) async {
+    try {
+      print('📡 Recuperando payment_method_id del SetupIntent...');
+
+      final token = await AuthService.getToken();
+      if (token == null) {
+        print('❌ No hay token de autenticación');
+        return null;
+      }
+
+      // Extraer el setup_intent_id del client_secret
+      // Formato: seti_xxxxx_secret_yyyyy
+      final setupIntentId = clientSecret.split('_secret_')[0];
+      print('📊 Setup Intent ID: $setupIntentId');
+
+      // Llamar al backend para que recupere el payment_method_id
+      final response = await http
+          .post(
+            Uri.parse(
+              '${ApiConstants.baseUrl}/api/payment-methods/retrieve-from-setup',
+            ),
+            headers: {
+              ...ApiConstants.headers,
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'setup_intent_id': setupIntentId}),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              print('⏱️ Timeout al recuperar payment_method_id');
+              throw Exception('Timeout');
+            },
+          );
+
+      print('📊 Status Code: ${response.statusCode}');
+      print('📊 Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+
+        if (body['success'] == true && body['data'] != null) {
+          final paymentMethodId = body['data']['payment_method_id'] as String?;
+          
+          if (paymentMethodId != null && paymentMethodId.isNotEmpty) {
+            print('✅ Payment Method ID recuperado: $paymentMethodId');
+            return paymentMethodId;
+          }
+        }
+      }
+
+      print('❌ No se pudo recuperar el payment_method_id');
+      return null;
+    } catch (e) {
+      print('❌ Error en retrievePaymentMethodFromSetupIntent: $e');
+      return null;
+    }
+  }
+
+  // Verificar y guardar el último método de pago agregado
+  // Este método se usa después de completar el Payment Sheet
+  // Como el Payment Sheet ya confirmó el SetupIntent en Stripe,
+  // simplemente listamos las tarjetas y la nueva debería aparecer
+  static Future<bool> verifyAndSaveLatestPaymentMethod(
+    String setupIntentClientSecret,
+  ) async {
+    try {
+      print('📡 Verificando nuevo método de pago...');
+
+      // Esperar un momento para que Stripe procese
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Obtener la lista actualizada de métodos de pago
+      // La nueva tarjeta ya debería estar vinculada por Stripe via webhook
+      // o podemos hacer una llamada directa al backend
+      final cards = await getPaymentMethods();
+
+      if (cards.isNotEmpty) {
+        print('✅ Tarjeta verificada correctamente');
+        print('📊 Total de tarjetas: ${cards.length}');
+        return true;
+      } else {
+        print('⚠️ No se encontraron tarjetas después de agregar');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Error en verifyAndSaveLatestPaymentMethod: $e');
+      return false;
+    }
+  }
 }

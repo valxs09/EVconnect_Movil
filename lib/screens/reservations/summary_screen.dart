@@ -126,7 +126,7 @@ class SummaryScreen extends StatelessWidget {
                     ),
                     _buildSummaryDetail('Duración Total:', finalDuration),
                     _buildSummaryDetail('Estación Utilizada:', finalStationId),
-                    
+
                     // Mostrar ahorro si existe (detención manual)
                     if (ahorro != null && ahorro != '\$0.00')
                       Padding(
@@ -175,7 +175,7 @@ class SummaryScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    
+
                     const Divider(height: 30),
 
                     // Cargo a Tarjeta
